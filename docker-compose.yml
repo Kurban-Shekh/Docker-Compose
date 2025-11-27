@@ -18,7 +18,7 @@ services:
     container_name: springboot_app
     restart: always
     ports:
-      - "8080:8080"
+      - "9090:9090"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/docker_db
       SPRING_DATASOURCE_USERNAME: root
