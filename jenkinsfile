@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "employeeapp"
+        TAG = "${env.BUILD_NUMBER}"     // Jenkins build number used as image tag
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm      // Pulls your PUBLIC GitHub repo
+            }
+        }
+
+        stage('Maven Build') {
+            steps {
+                sh 'mvn -B -DskipTests clean package'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                    echo "Building Docker image..."
+                    docker build -t ${IMAGE_NAME}:${TAG} .
+                    docker images | head -n 20
+                """
+            }
+        }
+
+        stage('Deploy using docker-compose') {
+            steps {
+                sh """
+                    echo "Stopping existing containers..."
+                    docker-compose down || true
+
+                    echo "Starting new containers..."
+                    export TAG=${TAG}
+                    docker-compose up -d --build
+
+                    echo "Deployment completed."
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Build + Deploy completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed. Check logs."
+        }
+    }
+}
