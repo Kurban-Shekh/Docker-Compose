@@ -2,56 +2,53 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "employeeapp"
-        TAG = "${env.BUILD_NUMBER}"     // Jenkins build number used as image tag
+        APP_IMAGE = "springboot_app:latest"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                checkout scm      // Pulls your PUBLIC GitHub repo
+                echo "Fetching latest code from GitHub..."
+                git branch: 'main', url: 'https://github.com/your-user/your-repo.git'
             }
         }
 
-        stage('Maven Build') {
+        stage('Build Maven Project') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                echo "Building project using Maven..."
+                sh './mvnw clean package -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh """
-                    echo "Building Docker image..."
-                    docker build -t ${IMAGE_NAME}:${TAG} .
-                    docker images | head -n 20
-                """
+                echo "Building Docker image..."
+                sh "docker build -t ${APP_IMAGE} ."
             }
         }
 
-        stage('Deploy using docker-compose') {
+        stage('Stop Existing Containers') {
             steps {
-                sh """
-                    echo "Stopping existing containers..."
-                    docker-compose down || true
+                echo "Stopping existing containers..."
+                sh "docker-compose down || true"
+            }
+        }
 
-                    echo "Starting new containers..."
-                    export TAG=${TAG}
-                    docker-compose up -d --build
-
-                    echo "Deployment completed."
-                """
+        stage('Deploy Using Docker Compose') {
+            steps {
+                echo "Deploying new containers..."
+                sh "docker-compose up -d --build"
             }
         }
     }
 
     post {
         success {
-            echo "Build + Deploy completed successfully!"
+            echo "Deployment Successful! Application running on port 9090."
         }
         failure {
-            echo "Pipeline failed. Check logs."
+            echo "Deployment Failed! Check Jenkins logs."
         }
     }
 }
