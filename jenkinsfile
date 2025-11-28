@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Fetching latest code from GitHub..."
-                git branch: 'main', url: 'https://github.com/your-user/your-repo.git'
+                git branch: 'main', url: 'https://github.com/Kurban-Shekh/Docker-Compose.git'
             }
         }
 
